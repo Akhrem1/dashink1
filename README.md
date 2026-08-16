@@ -10,6 +10,8 @@ Built for a **Kindle 7th Generation (KT2, 2014)** on firmware `5.12.2.2`: 600x80
 
 The service does one thing: `GET /dash.png` renders the current panel from whatever the sources last returned. There is no scheduler and nothing persisted. The Kindle fetches that URL on a loop and draws it to the framebuffer. E-ink holds the last image with no power, so a device that dies mid-loop leaves a readable screen.
 
+![how the pieces fit together](docs/architecture.svg)
+
 ## Quickstart
 
 ```bash
