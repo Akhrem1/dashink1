@@ -1,14 +1,11 @@
 #!/bin/sh
 # Diagnostic for dashink. Tap from the library; output goes to the screen via
-# the Hotfix's sh_integration. Safe: it does not stop lab126_gui, so the
-# touchscreen keeps working and there is nothing to recover from.
+# sh_integration. Does not stop lab126_gui, so there is nothing to recover from.
 #
-# Answers what dashink.sh cannot tell you when it fails: what the panel
-# geometry actually is, whether wifi has an address, and whether the dashboard
-# is reachable at all.
+# Reports panel geometry, whether wifi has an address, and whether the
+# dashboard is reachable.
 
-# ifconfig lives in /sbin, which is on the framework's PATH but not on the one
-# ssh gives you. Set it explicitly so this works from either.
+# ifconfig is in /sbin, which is on the framework's PATH but not on ssh's.
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 export PATH
 

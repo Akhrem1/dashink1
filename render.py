@@ -83,11 +83,9 @@ def _tile_label(d, cx, text, stale):
 def _sun_line(d, y, wx):
     """Sunrise and sunset on one line, left, sharing a baseline with today's range.
 
-    A centre column collided with the conditions on the right: "Überwiegend
-    klar" is 16 characters and right-aligned text grows leftwards into it.
-
-    U+2600 and U+263E from DejaVu, not emoji: PIL cannot draw a colour emoji
-    onto an "L" canvas.
+    Left, not centred: right-aligned conditions grow leftwards into a centre
+    column. U+2600 and U+263E from DejaVu, not emoji — PIL cannot draw a colour
+    emoji onto an "L" canvas.
     """
     rise, set_ = wx.get("sunrise"), wx.get("sunset")
     if not (rise and set_):
@@ -122,7 +120,7 @@ def _kuma_tile(d, cx, kuma, t):
     """Uptime Kuma monitor states.
 
     Quiet until something breaks: grey when everything is up, black and naming
-    names when it is not. "5/7" alone would mean walking to a screen.
+    names when it is not.
     """
     s = t["s"]
     _tile_label(d, cx, s["services"], kuma.get("stale", False))
@@ -150,10 +148,9 @@ def _kuma_tile(d, cx, kuma, t):
 def _host_tile(d, cx, host, t):
     """CPU load and memory for the machine dashink runs on.
 
-    Only drawn when there is a free slot, which means an install with neither
-    monitors nor storage configured still shows something real rather than an
-    empty row. On a Proxmox host these numbers barely move, so the other tiles
-    displace this one. See the README.
+    Only drawn when a slot is free, so an install with neither monitors nor
+    storage still shows something real. On a Proxmox host these numbers barely
+    move, so the other tiles displace this one. See the README.
     """
     s = t["s"]
     _tile_label(d, cx, s["host"], host.get("stale", False))
@@ -176,11 +173,9 @@ def _host_tile(d, cx, host, t):
 def render_art(data):
     """A photograph, fitted to the panel and dithered for e-ink.
 
-    Dithered rather than posterised like the dashboard: a photograph put through
-    hard quantisation gets contour lines across every sky and face.
-
-    Cover-fitted rather than letterboxed: white bars on a white panel read as a
-    failed render.
+    Dithered, not posterised like the dashboard: hard quantisation puts contour
+    lines across every sky and face. Cover-fitted, not letterboxed: white bars
+    on a white panel read as a failed render.
     """
     img = Image.open(io.BytesIO(data)).convert("L")
 

@@ -19,9 +19,8 @@ def catalogue(lang):
     """Everything render.py needs for one language.
 
     Each table falls back to English on its own, so a half-finished translation
-    renders with English gaps. Falling back per language instead would take the
-    whole panel down over one missing key: render.py subscripts these directly,
-    so a KeyError here 500s /dash.png and the Kindle draws nothing.
+    renders with English gaps. render.py subscripts these directly, so a
+    KeyError here 500s /dash.png and the Kindle draws nothing.
     """
     base = CATALOGUES[DEFAULT]
     mod = CATALOGUES.get(lang, base)

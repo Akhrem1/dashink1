@@ -68,9 +68,8 @@ class PushStore:
 class Expiring:
     """A value that clears itself at a deadline.
 
-    Used for the panel override, so "temporarily" is enforced by the code
-    rather than remembered by a person. Otherwise a note pinned for an
-    evening is still on the wall a week later.
+    Used for the panel override, so "temporarily" is enforced rather than
+    remembered.
     """
 
     def __init__(self):
@@ -105,8 +104,8 @@ def _wrap(value, at, ttl):
 def pve_source(host, port, node, token_id, token_secret, verify_ssl, ttl=300):
     """Node-level CPU and memory from the Proxmox API.
 
-    Reads /nodes/<node>/status only. That endpoint never touches the SnapRAID
-    disks, so polling it cannot interfere with hd-idle spindown.
+    /nodes/<node>/status only: that endpoint never touches the SnapRAID disks,
+    so polling it cannot interfere with hd-idle spindown.
     """
     url = f"https://{host}:{port}/api2/json/nodes/{node}/status"
     headers = {"Authorization": f"PVEAPIToken={token_id}={token_secret}"}
@@ -128,15 +127,11 @@ def pve_source(host, port, node, token_id, token_secret, verify_ssl, ttl=300):
 
 
 def local_host_source(ttl=60):
-    """CPU load, memory and uptime from /proc, the portable alternative to the
-    Proxmox API.
+    """CPU load, memory and uptime from /proc. Same shape as pve_source.
 
-    Returns the same shape as pve_source so render.py cannot tell them apart.
-    Load average rather than a CPU percentage, because an instantaneous sample
-    can land between two bursts of work and read near zero on a busy machine.
-
-    In a container /proc is the host's, which is what you want here: the panel
-    is reporting on the machine, not on itself.
+    Load average rather than a CPU percentage: an instantaneous sample can land
+    between two bursts and read near zero on a busy machine. In a container
+    /proc is the host's, which is what the panel should report on.
     """
 
     def fetch():
@@ -188,11 +183,9 @@ def weather_source(lat, lon, tz, ttl=1800):
         data = r.json()
         current, daily = data["current"], data["daily"]
 
-        # Open-Meteo answers 200 with "temperature_2m": null when the current
-        # reading is missing, which it does intermittently. That is an
-        # incomplete response, not a reading. Raising keeps the last good value
-        # and lets the tile go stale; returning it renders round(None) and 500s
-        # the whole panel, weather and all.
+        # Open-Meteo intermittently answers 200 with "temperature_2m": null.
+        # Raising keeps the last good value and lets the tile go stale;
+        # returning it renders round(None) and 500s the whole panel.
         if current.get("temperature_2m") is None:
             raise ValueError("no current temperature in Open-Meteo response")
 
@@ -211,15 +204,12 @@ def weather_source(lat, lon, tz, ttl=1800):
         return {
             "temp": current["temperature_2m"],
             "code": current["weather_code"],
-            # Today's range, from index 0, the one days[] skips. A 27° reading
-            # in the afternoon says nothing about the night, and the overnight
-            # low is the number you actually want before opening a window.
+            # Today's range, from index 0, the one days[] skips.
             "tmin": daily["temperature_2m_min"][0],
             "tmax": daily["temperature_2m_max"][0],
-            # "2026-08-15T06:14" -> "06:14". Sliced rather than parsed: the API
-            # already returns these in the requested timezone, so building a
-            # datetime only to format it back would add a tzdata dependency the
-            # image does not otherwise need.
+            # "2026-08-15T06:14" -> "06:14". Sliced, not parsed: the API already
+            # returns these in the requested timezone, and parsing would add a
+            # tzdata dependency the image does not otherwise need.
             "sunrise": daily["sunrise"][0][11:16],
             "sunset": daily["sunset"][0][11:16],
             "days": days,
@@ -234,12 +224,9 @@ _KUMA_NAME = re.compile(r'monitor_name="([^"]*)"')
 def kuma_source(base_url, api_key, ttl=120):
     """Monitor states from Uptime Kuma's Prometheus endpoint.
 
-    Kuma's real API is socket.io, which is far more than this needs. /metrics
-    answers "what is up right now" over one GET, and covers every monitor,
-    unlike a status page, which only reports what someone remembered to add.
-
-    Auth is HTTP Basic with an empty username and the API key as the password
-    (Kuma: Settings -> API Keys).
+    /metrics rather than Kuma's socket.io API: one GET, and it covers every
+    monitor rather than only those added to a status page. Auth is HTTP Basic
+    with an empty username and the API key as the password.
     """
     url = f"{base_url.rstrip('/')}/metrics"
 
@@ -251,11 +238,9 @@ def kuma_source(base_url, api_key, ttl=120):
         for line in r.text.splitlines():
             if not line.startswith("monitor_status{"):
                 continue
-            # 0 down, 1 up, 2 pending, 3 maintenance. Only 0 is a problem:
-            # maintenance is deliberate and pending is still retrying, so
-            # neither should light up the panel. Counted after the parse, so a
-            # value that is not a number (Kuma writes "Nan" for a monitor with
-            # no heartbeat yet) is left out rather than counted as up.
+            # 0 down, 1 up, 2 pending, 3 maintenance. Only 0 is a problem.
+            # Counted after the parse, so Kuma's "Nan" (a monitor with no
+            # heartbeat yet) is left out rather than counted as up.
             try:
                 status = int(float(line.rsplit(" ", 1)[-1]))
             except ValueError:
@@ -265,10 +250,9 @@ def kuma_source(base_url, api_key, ttl=120):
                 name = _KUMA_NAME.search(line)
                 down.append(name.group(1) if name else "?")
 
-        # A 200 carrying no monitors is not an empty Kuma, it is the wrong
-        # response: a proxy login page, or /metrics turned off. Raising keeps
-        # the last good value and lets the tile go stale; returning it would
-        # render "0/0 all up", a false all-clear.
+        # A 200 with no monitors means the wrong response, not an empty Kuma:
+        # a proxy login page, or /metrics turned off. Returning it would render
+        # "0/0 all up", a false all-clear.
         if not total:
             raise ValueError("no monitor_status lines in /metrics")
 
@@ -280,9 +264,9 @@ def kuma_source(base_url, api_key, ttl=120):
 def immich_source(base_url, api_key, album_id="", ttl=3600):
     """One random photo from Immich, re-picked once per TTL.
 
-    Hourly rather than every refresh, because the Kindle loop only does a full
-    e-ink clear every twelfth cycle. A photo that changes more often than the
-    clear leaves the previous one ghosting underneath it.
+    Hourly rather than every refresh: the Kindle only does a full e-ink clear
+    every twelfth cycle, and changing faster than that leaves the previous
+    photo ghosting underneath.
     """
     url = f"{base_url.rstrip('/')}/api/search/random"
     headers = {"x-api-key": api_key, "Content-Type": "application/json"}
@@ -303,8 +287,8 @@ def immich_source(base_url, api_key, album_id="", ttl=3600):
 
 
 def immich_image(base_url, api_key, asset_id):
-    """Bytes of a rendered preview. Not the original: dashink has no business
-    decoding a 40 megapixel file to fill a 600x800 panel."""
+    """Bytes of a rendered preview, not the original: no point decoding a 40
+    megapixel file to fill a 600x800 panel."""
     r = requests.get(
         f"{base_url.rstrip('/')}/api/assets/{asset_id}/thumbnail",
         params={"size": "preview"},
@@ -334,10 +318,8 @@ def parse_media_payload(payload):
         raise ValueError("total must be positive")
 
     result = {"total": total, "used": used, "avail": avail}
-    # SMART is optional and best-effort. The collector omits it when the
-    # snapraid log is missing or unparseable. A malformed block must never
-    # reject an otherwise valid pool reading, so it is passed through rather
-    # than validated, and render.py reads it defensively.
+    # SMART is optional: passed through unvalidated so a malformed block cannot
+    # reject an otherwise valid pool reading. render.py reads it defensively.
     smart = payload.get("smart")
     if isinstance(smart, dict):
         result["smart"] = smart
