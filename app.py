@@ -45,8 +45,6 @@ NODE_NAME = _env("NODE_NAME", "") or _env("PVE_NODE", "") or platform.node()
 WEATHER_LABEL = _env("WEATHER_LABEL", "")
 VERIFY_SSL = _flag("PVE_VERIFY_SSL", False)
 
-# --- host: local /proc by default, Proxmox when asked for and configured -----
-# Falling back rather than failing means a half-filled .env still boots.
 HOST_SOURCE = _env("HOST_SOURCE", "local").strip().lower()
 PVE_HOST = _env("PVE_HOST", "")
 PVE_TOKEN_ID = _env("PVE_TOKEN_ID", "")
@@ -122,8 +120,8 @@ def _in_art_window(now):
 def _show_art(now):
     """Window wins; outside it, alternate if asked to.
 
-    Derived from the clock rather than a request counter, so a browser opening
-    the URL cannot shift the Kindle out of step.
+    Derived from the clock, not a request counter, so a browser opening the URL
+    cannot shift the Kindle out of step.
     """
     if not immich:
         return False
@@ -135,10 +133,9 @@ def _show_art(now):
 
 
 def _art_png():
-    """PNG bytes for a random photo, or None if anything at all goes wrong.
+    """PNG bytes for a random photo, or None if anything goes wrong.
 
-    Never raises: art is decoration, and a failure here must not stop the
-    dashboard from rendering.
+    Never raises: art is decoration and must not stop the dashboard rendering.
     """
     try:
         asset = immich.get()

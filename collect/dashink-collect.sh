@@ -1,11 +1,9 @@
 #!/bin/bash
 # Push storage pool usage and disk health to dashink, from cron every 15 minutes.
 #
-# Runs on the machine that can see the pool, which is not necessarily the one
-# running dashink, hence a push rather than the dashboard pulling. df/statfs
-# reads the cached in-memory superblock and does not spin up a parked disk. Keep
-# it that way: do not add du, find, or anything that walks the tree, or the
-# array never idles.
+# Runs on the machine that can see the pool, which need not be the one running
+# dashink, hence a push. df/statfs reads the cached superblock and does not spin
+# up a parked disk: do not add du, find, or anything that walks the tree.
 #
 # Config lives in /etc/dashink.env, kept out of git because of the token:
 #   DASHINK_URL=http://<dashink-host>:8099/ingest/media
@@ -29,20 +27,16 @@ fi
 
 read -r total used avail < <(df -B1 --output=size,used,avail "$MOUNT" | tail -n1)
 
-# SMART comes from the newest snapraid-smart log, not from smartctl. The weekly
-# cron already collected it, and re-reading a log on the system disk cannot wake
-# a parked data disk. Polling smartctl here every 15 minutes would undo hd-idle.
-#
-# Fail-soft by design: a missing or unparseable log omits the field and the
-# dashboard falls back to showing uptime. It must never take the pool figures
-# down with it, which is why nothing here is allowed to fail the script.
+# From the newest snapraid-smart log, not smartctl: polling smartctl every 15
+# minutes would undo hd-idle. Every step below is allowed to fail, so a missing
+# or unparseable log omits the field rather than losing the pool figures too.
 smart_json=""
 smart_log=$(ls -1t /var/log/snapraid-smart-*.log 2>/dev/null | head -1 || true)
 if [ -n "$smart_log" ] && [ -r "$smart_log" ]; then
   # Data rows look like:
   #     30    499       0  11% 16.0  ZL2NQ8F2         /dev/sde      d4
-  # $3 error count, $4 failure probability, $7 device. Keying on $7 skips the
-  # two header lines, the rule, and snapraid's trailing prose.
+  # $3 errors, $4 failure probability, $7 device. Keying on $7 skips the
+  # headers, the rule, and snapraid's trailing prose.
   smart_fields=$(awk '
     $7 ~ /^\/dev\// {
       n++

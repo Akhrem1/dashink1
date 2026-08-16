@@ -10,21 +10,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Named explicitly rather than `COPY . .` so the build context's kindle/,
-# docs/ and __pycache__ stay out of the image. The cost is that a new module
-# has to be added here too, or the container dies on import at startup.
 COPY app.py sources.py render.py i18n.py ./
 COPY lang/ ./lang/
 
-# The app writes nothing and listens above 1024, so it has no reason to be root.
-# The copied files stay root-owned and world-readable, which also stops the
-# process rewriting its own code.
-#
-# The home directory has to exist even though nothing of ours writes to it:
-# --no-create-home still records /home/dashink in passwd, and gunicorn's control
-# server opens $HOME at startup. Without it every boot logs
-# "Control server error: [Errno 13] Permission denied: '/home/dashink'" while
-# otherwise serving normally.
 RUN useradd --system --create-home --home-dir /home/dashink --uid 10001 dashink
 USER dashink
 

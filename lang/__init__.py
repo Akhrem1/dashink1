@@ -7,18 +7,13 @@ you leave out from English, so a half-finished translation still renders.
 Each module provides four names:
 
   STRINGS        the short labels. "date" is a strftime format and "decimal"
-                 is the separator for temperatures. Numeric date formats only:
-                 month names would mean another table per language, for no gain
-                 on a panel where the weekday is the part people read.
+                 is the separator for temperatures. Numeric date formats only.
   WEEKDAYS       seven short names, Monday first, to match date.weekday().
   WEEKDAYS_LONG  the same seven spelled out, for the header.
   WMO            weather code -> (full label, short label). The short form has
-                 to fit a 184px column at 20px, so it collapses intensity:
-                 "Heavy drizzle" and "Drizzle" both read "Drizzle" three days
-                 out.
+                 to fit a 184px column at 20px, so it collapses intensity.
 
-Plain dicts rather than gettext: these are ~20 short strings and a .po
-toolchain would be more machinery than the problem deserves.
+Plain dicts rather than gettext: ~20 short strings do not need a .po toolchain.
 """
 
 from . import de, en
