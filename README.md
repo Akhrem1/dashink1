@@ -18,7 +18,7 @@ cd dashink
 cp .env.example .env
 ```
 
-Set `WEATHER_LAT` and `WEATHER_LON` in `.env`, in decimal degrees. Right-click a spot in Google Maps to read them off, or use [latlong.net](https://www.latlong.net/). That is the only edit needed. Every source is optional and each one is omitted from the panel when it is not configured, so two coordinates already give you a usable screen.
+Set `WEATHER_LAT` and `WEATHER_LON` in `.env`, in decimal degrees. That is the only edit needed. Every source is optional and each one is omitted from the panel when it is not configured, so two coordinates already give you a usable screen.
 
 ```bash
 docker compose up -d
