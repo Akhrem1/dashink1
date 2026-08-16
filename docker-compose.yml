@@ -1,0 +1,28 @@
+services:
+  dashink:
+    image: ghcr.io/dietrichmax/dashink:latest
+    # Build locally instead with: docker compose build
+    build: .
+    container_name: dashink
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    env_file: .env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
