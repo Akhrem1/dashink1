@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 import i18n
 
-W, H = 600, 900
+W, H = 700, 900
 MARGIN = 24
 BLACK, GREY, LIGHT, WHITE = 0, 110, 190, 255
 
