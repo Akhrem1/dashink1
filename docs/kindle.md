@@ -22,15 +22,7 @@ Confirm the jailbreak method against the [jailbreak wizard](https://kindlemoddin
 10. Then KUAL: drag `Update_KUALBooklet_hotfix_c6ac782_install.bin` to the root, eject, and run **Update Your Kindle** again. Another reboot.
 11. KUAL now appears in the library as a book. It is the launcher for GTK extensions, not for the scripts in this repo, which the Hotfix's `sh_integration` picks up straight from `/mnt/us/documents/`.
 12. **renameotabin**: [MobileRead post](https://www.mobileread.com/forums/showpost.php?p=4076733&postcount=25), `renameotabin.zip`. Unzip, move the folder into `extensions/`, open KUAL, run it and choose rename. It reboots. This is what permanently blocks OTA updates, and an update is the one remaining way to lose the jailbreak.
-13. **[kterm](https://github.com/bfabiszewski/kterm)**: a GTK terminal with an on-screen keyboard. Copy into `extensions/` and launch from KUAL. Packages at [fabiszewski.net](https://www.fabiszewski.net/kindle-terminal/). For other packages, try launching them from kterm; if that fails, unpack into a directory, navigate there and run with a leading `./`.
-14. **[KPM](https://github.com/gingrspacecadet/kpm)**, the package manager. It is *not* bundled with the Hotfix. Install it by running this in kterm, which is why kterm comes first:
-
-    ```sh
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh)"
-    ```
-
-    Needs `curl` and `unzip`/`tar` on the device. Invoked afterwards with `;kpm` in the search bar.
-15. **USBNetwork**, for SSH. Same [MobileRead thread](https://www.mobileread.com/forums/showthread.php?t=225030) as KUAL, with a useful [writeup](https://blog.znjoa.com/2023/07/26/installing-usbnetwork-on-kindle/). Take `Update_usbnet_0.22.N_install_pw2_and_up.bin`: `pw2_and_up` is the device target and covers every modern 5.x Kindle including KT2, so it is the right file despite the Paperwhite name. Put it in `mrpackages/` on the root, then KUAL → Helper → Install MR Packages → USBNetwork.
+13. **USBNetwork**, for SSH. Same [MobileRead thread](https://www.mobileread.com/forums/showthread.php?t=225030) as KUAL, with a useful [writeup](https://blog.znjoa.com/2023/07/26/installing-usbnetwork-on-kindle/). Take `Update_usbnet_0.22.N_install_pw2_and_up.bin`: `pw2_and_up` is the device target and covers every modern 5.x Kindle including KT2, so it is the right file despite the Paperwhite name. Put it in `mrpackages/` on the root, then KUAL → Helper → Install MR Packages → USBNetwork.
 
     **Configure it over USB mass storage; no shell needed.** `/mnt/us` *is* the drive your computer mounts, so usbnet's files sit in `usbnet/etc` on it:
 
@@ -51,7 +43,7 @@ Confirm the jailbreak method against the [jailbreak wizard](https://kindlemoddin
       IdentitiesOnly yes
     ```
 
-16. Copy [`kindle/`](../kindle/)`*.sh` to `/mnt/us/documents/` and set `DASHINK_URL` at the top of `dashink.sh`. With SSH working this no longer means plugging the Kindle in:
+14. Copy [`kindle/`](../kindle/)`*.sh` to `/mnt/us/documents/` and set `DASHINK_URL` at the top of `dashink.sh`. With SSH working this no longer means plugging the Kindle in:
 
     ```bash
     ssh kindle 'cat > /mnt/us/documents/dashink.sh' < kindle/dashink.sh
@@ -76,9 +68,22 @@ Confirm the jailbreak method against the [jailbreak wizard](https://kindlemoddin
     ssh kindle 'nohup sh /mnt/us/documents/dashink.sh > /dev/null 2>&1 < /dev/null &'
     ssh kindle 'sh /mnt/us/documents/restore.sh'
     ```
-17. Last, if the device carries Special Offers, run `disable_ads.sh` from [notmarek's scriptlets](https://scriptlets.notmarek.com/). Drop it in `/mnt/us/documents/` and tap it. Ads appear in the gaps before the loop starts and after `restore.sh`.
 
-KUAL after the sequence above, with kterm, USBNetwork and the OTA blocker installed:
+## Optional
+
+None of these are needed to run dashink. The three scripts use only firmware tools (`eips`, `lipc-get-prop`, `lipc-set-prop`, `start`, `stop`, `ifconfig`) and busybox builtins, and `dashink.sh` falls back to `wget` where `curl` is absent, so there is nothing to install.
+
+- **`disable_ads.sh`**, if the device carries Special Offers. From [notmarek's scriptlets](https://scriptlets.notmarek.com/). Drop it in `/mnt/us/documents/` and tap it. Ads appear in the gaps before the loop starts and after `restore.sh`. This is the one most people will actually want.
+- **[kterm](https://github.com/bfabiszewski/kterm)**: a GTK terminal with an on-screen keyboard. Copy into `extensions/` and launch from KUAL. Packages at [fabiszewski.net](https://www.fabiszewski.net/kindle-terminal/). Useful for poking at the device before SSH works, but see the warning below: it is not a recovery path.
+- **[KPM](https://github.com/gingrspacecadet/kpm)**, a package manager, *not* bundled with the Hotfix. Installed from inside kterm, which is the only reason kterm would need to come first:
+
+  ```sh
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh)"
+  ```
+
+  Note the circularity: that installer needs `curl` already on the device, so it cannot help in the one case where a package manager would. Invoked afterwards with `;kpm` in the search bar.
+
+KUAL after the sequence above, with the optional kterm, USBNetwork and the OTA blocker installed:
 
 ![the KUAL launcher](kual.jpg)
 
